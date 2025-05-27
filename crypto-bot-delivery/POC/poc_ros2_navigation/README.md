@@ -198,6 +198,109 @@ After adding this, rebuild the workspace: `colcon build --packages-select delive
 
 This completes the demonstration of localization and navigation using a pre-built map.
 
+## Testing the ROS2 Navigation Stack
+
+Testing a complex system like the ROS2 Navigation Stack integrated with Gazebo involves multiple levels, from individual node unit tests (if applicable) to full simulation-based integration tests.
+
+**Unit Testing:**
+
+The current Python code within the `delivery_navigation` and `delivery_simulation` packages primarily consists of ROS2 launch files and configuration files (YAML, URDF, world files). These types of files declare and configure ROS nodes and simulation environments rather than containing complex, separable Python logic. As such, traditional Python unit tests for standalone functions or classes are not extensively applicable to the current codebase of these specific packages. Future development of custom Python nodes within these packages would warrant dedicated unit tests using frameworks like `pytest`.
+
+**Integration and Behavior Testing (Conceptual BDD Scenarios):**
+
+For higher-level behavior and integration testing, Behavior-Driven Development (BDD) can be used to define expected system behaviors. The following scenarios are defined conceptually in `src/delivery_navigation/tests/features/robot_navigation_poc.feature`. They outline key navigation capabilities:
+
+```gherkin
+Feature: Robot Navigation POC Scenarios
+  As a system integrator,
+  I want to define conceptual scenarios for robot navigation
+  to outline expected behaviors in simulation.
+
+  Background:
+    Given the robot simulation is running with a known map
+    And the Nav2 stack is active and localized
+
+  Scenario: Robot navigates to a valid goal
+    Given the robot is at an initial pose (e.g., 0,0,0)
+    When a navigation goal (e.g., 5,5,0) is sent to Nav2
+    Then Nav2 should plan a path to the goal
+    And the robot should start moving towards the goal
+    And the robot should eventually reach the goal location (or close proximity)
+    And Nav2 should report success
+
+  Scenario: Robot encounters an unexpected obstacle
+    Given the robot is at an initial pose
+    And there is an unexpected dynamic obstacle placed on its planned path
+    When a navigation goal is sent that requires passing the obstacle's location
+    Then Nav2 should initially plan a path
+    And the robot should start moving
+    And when the robot detects the unexpected obstacle
+    Then Nav2 should attempt to re-plan or engage recovery behaviors
+    And the robot should either find an alternative path or stop safely if no path is found
+
+  Scenario: Invalid goal is sent
+    Given the robot is at an initial pose
+    When an invalid navigation goal (e.g., inside a known obstacle on the map) is sent
+    Then Nav2 should fail to find a valid path
+    And Nav2 should report failure or rejection of the goal
+```
+
+**Notes on Implementing ROS2/Gazebo BDD Tests:**
+
+Implementing full automated step definitions for these BDD scenarios in a ROS2/Gazebo environment is an advanced task that typically requires:
+*   **ROS2 Testing Frameworks:** Utilizing tools like `launch_testing` or `rostest` (from ROS1, with ROS2 equivalents) to manage the lifecycle of nodes and simulations within tests.
+*   **Test-Specific Nodes:** Creating Python or C++ nodes that can interact with the simulation (e.g., publish goals, subscribe to robot pose, check Nav2 status, spawn/move obstacles in Gazebo).
+*   **Gazebo Test Tools:** Using Gazebo services or plugins to control aspects of the simulation, query world state, or inject events.
+*   **Mocking and Simulation Control:** Carefully managing the simulation state and potentially mocking parts of the Nav2 stack or sensor data for specific test conditions.
+
+While full implementation of these step definitions is beyond the scope of this initial POC's automated generation, these Gherkin scenarios provide a valuable blueprint for future testing efforts. The manual testing steps outlined in the previous sections for SLAM and AMCL navigation serve as a practical way to verify these behaviors for this POC.
+
+## Navigation Processes Flow (Activity Diagram)
+
+The following diagram outlines the two main operational flows for the ROS2 navigation stack as demonstrated in this POC: map building (SLAM) and autonomous navigation using a pre-built map (AMCL).
+
+```mermaid
+graph TD
+    A[Start] --> B{Choose Mode};
+
+    subgraph SLAM (Map Building) Process
+        B -- SLAM Mode --> C[Launch SLAM Simulation (slam_simulation.launch.py)];
+        C --> D[Gazebo: Robot in Unknown World];
+        D --> E[RViz: Visualize Robot & Sensor Data];
+        E --> F[Teleoperate Robot to Explore Environment];
+        F --> G[SLAM Toolbox: Process Sensor Data & Odometry];
+        G --> H[RViz: Live Map Update];
+        H -- Exploration Complete? --> I{Satisfied with Map?};
+        I -- Yes --> J[Save Map (nav2_map_saver_cli)];
+        J --> K[Map Saved (.yaml & .pgm)];
+        K --> EndSLAM[SLAM Process Complete];
+        I -- No --> F;
+    end
+
+    subgraph AMCL (Autonomous Navigation) Process
+        B -- Navigation Mode --> L[Ensure Map is Saved (e.g., my_map.yaml)];
+        L --> M[Launch Navigation Simulation (navigation_simulation.launch.py with map argument)];
+        M --> N[Gazebo: Robot in Known World (from map)];
+        N --> O[RViz: Display Saved Map & Robot Model];
+        O --> P[AMCL: Localize Robot on Map];
+        P -- Initial Pose Correct? --> Q{Pose Accurate?};
+        Q -- No --> R[RViz: Set Initial Pose ("2D Pose Estimate")];
+        R --> P;
+        Q -- Yes --> S[RViz: Send Navigation Goal ("Nav2 Goal")];
+        S --> T[Nav2: Plan Path to Goal];
+        T --> U[Robot: Autonomously Follows Path];
+        U --> V[Nav2: Monitor Progress & Avoid Obstacles];
+        V -- Goal Reached? --> W{Goal Achieved?};
+        W -- Yes --> X[Nav2: Report Success];
+        X --> EndNav[Navigation Process Complete];
+        W -- No / Stuck --> Y[Nav2: Recovery Behaviors / Re-planning];
+        Y -- Path Found? --> U;
+        Y -- No Path / Failure --> Z[Nav2: Report Failure];
+        Z --> EndNav;
+    end
+    
+```
+
 ## 7. Next Steps (Preview)
 
 The map (`my_slam_map.yaml` and `my_slam_map.pgm`) created in this SLAM demonstration will be used in the next phase of the ROS2 Navigation POC. This next phase will focus on:

@@ -132,6 +132,61 @@ These functions directly call methods on the loaded `Escrow` smart contract. The
     *   Prints the fetched order details to the console.
     *   Returns the raw order data tuple from the contract.
 
+## Sequence of Interaction: `blockchain_interface.py` and `Escrow.sol`
+
+The following diagram illustrates the typical sequence of calls made from the `blockchain_interface.py` script to the `Escrow.sol` smart contract functions for a delivery operation:
+
+```mermaid
+sequenceDiagram
+    participant Script as blockchain_interface.py
+    participant Web3py as Web3.py Library
+    participant EscrowContract as Escrow.sol
+
+    Script->>Web3py: 1. connect_to_node(node_url)
+    Web3py-->>Script: 2. w3 instance (connected)
+
+    Script->>Web3py: 3. load_contract(w3, abi, contract_address)
+    Web3py-->>Script: 4. contract_object
+
+    Note over Script,EscrowContract: Scenario: Create a new delivery order
+
+    Script->>Script: 5. generate_secret_hash(pickup_secret)
+    Script->>Script: 6. generate_secret_hash(delivery_secret)
+    
+    Script->>Web3py: 7. Prepare 'createOrder' transaction (order_id, provider_addr, hashes, amount_wei)
+    Web3py->>EscrowContract: 8. contract_object.functions.createOrder(...).transact({'from': client_addr, 'value': amount_wei})
+    EscrowContract-->>Web3py: 9. Transaction Hash
+    Web3py->>Web3py: 10. wait_for_transaction_receipt(tx_hash)
+    Web3py-->>Script: 11. Transaction Receipt (Success/Fail)
+    Script->>Script: 12. Log OrderCreated event details from receipt
+
+    Note over Script,EscrowContract: Scenario: Confirm pickup
+
+    Script->>Web3py: 13. Prepare 'confirmPickup' transaction (order_id, pickup_secret)
+    Web3py->>EscrowContract: 14. contract_object.functions.confirmPickup(...).transact({'from': robot_addr})
+    EscrowContract-->>Web3py: 15. Transaction Hash
+    Web3py->>Web3py: 16. wait_for_transaction_receipt(tx_hash)
+    Web3py-->>Script: 17. Transaction Receipt
+    Script->>Script: 18. Log OrderPickedUp event
+
+    Note over Script,EscrowContract: Scenario: Confirm delivery
+
+    Script->>Web3py: 19. Prepare 'confirmDelivery' transaction (order_id, delivery_secret)
+    Web3py->>EscrowContract: 20. contract_object.functions.confirmDelivery(...).transact({'from': client_addr})
+    EscrowContract-->>Web3py: 21. Transaction Hash
+    Web3py->>Web3py: 22. wait_for_transaction_receipt(tx_hash)
+    Web3py-->>Script: 23. Transaction Receipt
+    Script->>Script: 24. Log OrderDelivered & PaymentReleased events
+
+    Note over Script,EscrowContract: Scenario: Get order details
+
+    Script->>Web3py: 25. Call 'orders' public variable (order_id)
+    Web3py->>EscrowContract: 26. contract_object.functions.orders(order_id_bytes32).call()
+    EscrowContract-->>Web3py: 27. Order data
+    Web3py-->>Script: 28. Decoded order details
+```
+This diagram shows the interaction flow for the main functions within `blockchain_interface.py` when communicating with the deployed smart contract.
+
 ## 5. Running the Script
 
 1.  **Ensure Prerequisites and Setup:**

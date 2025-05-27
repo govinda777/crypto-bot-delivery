@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crypto-bot-delivery-core"
+version = "0.1.0"
+description = "Core components for the Crypto Bot Delivery project."
+readme = "README.md" # Assuming one exists or will be added
+license = {text = "MIT License"} # Or your chosen license
+authors = [
+    {name = "Your Name", email = "you@example.com"},
+]
+# Add dependencies if any are strictly required by the core package itself
+# For example, web3.py if blockchain_interface is part of the core installable package
+# dependencies = [
+#     "web3", 
+# ]
+
+[tool.setuptools.packages.find]
+where = ["src"] # Look for packages in src
+include = ["delivery_crypto*"] # Include delivery_crypto and its sub-packages
+# exclude = [] # Packages to exclude
+
+[tool.setuptools.package-data]
+"delivery_crypto" = ["*.json"] # Example if ABI files were inside the package
+
+# pytest configuration (optional, can also be in pytest.ini or conftest.py)
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = [
+    "src/delivery_crypto/tests",
+    # Add other test paths here
+]
+minversion = "6.0"
+addopts = "-ra -q"
+markers = [
+    "slow: marks tests as slow to run",
+    "integration: marks integration tests",
+]

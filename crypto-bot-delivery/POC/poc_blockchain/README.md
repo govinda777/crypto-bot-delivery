@@ -11,6 +11,47 @@ The key components involved are:
 - **`Escrow.json`**: The ABI (Application Binary Interface) of the `Escrow.sol` contract, necessary for interacting with it. Located in `crypto-bot-delivery/smart_contracts/`.
 - **`blockchain_interface.py`**: The Python script that simulates client and robot interactions with the smart contract. Located in `crypto-bot-delivery/src/delivery_crypto/`.
 
+## Delivery Transaction Flow (Sequence Diagram)
+
+The following diagram illustrates the sequence of interactions for a typical delivery order:
+
+```mermaid
+sequenceDiagram
+    participant ClientApp as Client Mobile App
+    participant API as Backend API
+    participant EscrowContract as Escrow Smart Contract
+    participant RobotAgent as Robot (ROS2 + Crypto Interface)
+
+    ClientApp->>API: 1. Request Delivery Quotation (details)
+    API-->>ClientApp: 2. Provide Quotation (price, terms)
+
+    ClientApp->>API: 3. Create Delivery Order (confirm quotation)
+    API->>EscrowContract: 4. Call createOrder (client, robot_wallet, amount, pickupHash, deliveryHash)
+    Note over API,EscrowContract: API holds/generates secrets, provides hashes to contract
+    EscrowContract-->>API: 5. OrderCreated Event / TX Receipt
+    API-->>ClientApp: 6. Order Confirmation (orderId)
+    
+    activate RobotAgent
+    API->>RobotAgent: 7. Notify New Task (orderId, pickup_loc, delivery_loc)
+    RobotAgent->>RobotAgent: 8. Navigate to Pickup Location
+    
+    RobotAgent->>API: 9. Scan Pickup QR (contains pickup_secret_clear)
+    API->>EscrowContract: 10. Call confirmPickup (orderId, pickup_secret_clear)
+    EscrowContract-->>API: 11. OrderPickedUp Event / TX Receipt
+    API-->>RobotAgent: 12. Pickup Confirmed by Blockchain
+
+    RobotAgent->>RobotAgent: 13. Navigate to Delivery Location
+    
+    ClientApp->>API: 14. Client Scans Delivery QR (from Robot, contains delivery_secret_clear)
+    API->>EscrowContract: 15. Call confirmDelivery (orderId, delivery_secret_clear)
+    EscrowContract-->>API: 16. OrderDelivered Event / PaymentReleased Event / TX Receipt
+    API-->>ClientApp: 17. Delivery Confirmed, Payment Released
+    API-->>RobotAgent: 18. Delivery Cycle Complete
+    deactivate RobotAgent
+
+```
+*(Note: The QR code scanning part implies an interaction where the robot might display a QR code, or the client/robot scans a code associated with the location/package. The secrets are simplified here as being scanned directly for clarity in the diagram).*
+
 ## Prerequisites
 
 Before running this POC, ensure you have the following installed:
@@ -104,6 +145,56 @@ The script will print console logs detailing its actions:
 *   **Delivery Confirmation & Payment Release:** Logs showing the client confirming delivery, transaction details, the updated order status, and the payment being released to the robot.
 *   Final balances for the client and robot accounts, illustrating the transfer of funds (minus gas costs).
 *   Details of the order fetched from the smart contract at each step.
+
+## Running Blockchain Integration Tests (BDD)
+
+This project includes Behavior-Driven Development (BDD) tests for the `Escrow.sol` smart contract lifecycle using `pytest` and `pytest-bdd`. These tests interact with a live blockchain environment (typically a local testnet like Ganache).
+
+**1. Prerequisites for Testing:**
+
+*   **Python Environment:** Ensure you have Python 3.10+ and `pip` installed.
+*   **Install Test Dependencies:** Navigate to the root of the `crypto-bot-delivery` project directory. It's recommended to use a virtual environment.
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    pip install pytest pytest-mock pytest-bdd web3 python-dotenv eth-tester # Add other deps if used by tests
+    pip install -e . # Install crypto-bot-delivery in editable mode
+    ```
+    *(Note: A `requirements-dev.txt` or `pyproject.toml` [testing extra] would typically manage these.)*
+*   **Ganache:** Ensure Ganache (or your configured Ethereum testnet) is running. The tests default to `http://127.0.0.1:7545`.
+    *   Make sure Ganache has several funded accounts available. The tests use the first few accounts for deploying the contract, and as "Alice" (client) and "RoboDeliverer" (robot).
+*   **Smart Contract Artifacts:** The tests require the compiled smart contract ABI (`Escrow.json`) and bytecode (`Escrow.bin`). These should be present in `crypto-bot-delivery/smart_contracts/`. If not, recompile the contract (e.g., using `npx solc ...` as described in main project setup or the `smart_contract_guide.md`).
+
+**2. Running the Tests:**
+
+*   **Navigate to Project Root:** Open your terminal and go to the root directory of the `crypto-bot-delivery` project.
+    ```bash
+    cd /path/to/crypto-bot-delivery
+    ```
+*   **Activate Virtual Environment (if used):**
+    ```bash
+    source venv/bin/activate
+    ```
+*   **Run `pytest`:**
+    Execute `pytest`. It will automatically discover and run tests in the `src/delivery_crypto/tests/` directory, including both unit tests (`test_*.py`) and BDD tests (`test_*_steps.py` with `.feature` files).
+    ```bash
+    pytest -v src/delivery_crypto/tests/
+    ```
+    *   The `-v` flag provides verbose output.
+    *   You can also run specific test files or use markers if configured.
+
+**3. Interpreting Test Output:**
+
+*   `pytest` will show the status of each test (passed, failed, skipped).
+*   For BDD tests, `pytest-bdd` provides output that maps to the Gherkin scenarios and steps.
+*   If tests fail, the output will include details about the failure, such as assertion errors or exceptions. This can help diagnose issues with the smart contract logic or the test implementation.
+
+**4. Test Coverage (Optional):**
+*   To measure test coverage for your Python code (like `blockchain_interface.py`), you can use `pytest-cov`:
+    ```bash
+    pip install pytest-cov
+    pytest --cov=src/delivery_crypto src/delivery_crypto/tests/
+    ```
 
 ## Demonstration Points
 

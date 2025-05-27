@@ -53,6 +53,27 @@ This struct holds all the necessary information for a single delivery order.
 *   **`deliveryConfirmationHash` (bytes32):**
     *   A Keccak256 hash of a secret string known to the client. Used to verify delivery confirmation.
 
+## Delivery Order State Transitions
+
+The `DeliveryOrder` struct includes a `Status` enum that tracks the current state of the order. The following diagram illustrates the possible state transitions:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Created: createOrder()
+
+    Created --> PickedUp: confirmPickup()
+    PickedUp --> Delivered: confirmDelivery()
+    Delivered --> [*]: Payment Released
+
+    Created --> Cancelled: cancelOrder() (by client)
+    Cancelled --> [*]: Funds Refunded
+
+    %% Optional: Add notes for conditions or actors if desired
+    %% e.g. note right of PickedUp: Only by deliveryProvider
+    %% note right of Delivered: Only by client
+```
+This diagram shows the primary lifecycle states. The `Refunded` state is implicitly part of the `Cancelled` transition's outcome where funds are returned. The `PaymentReleased` is the outcome of the `Delivered` transition.
+
 ## 5. Events
 
 Events are emitted by the contract during key state changes. These can be monitored by off-chain applications.

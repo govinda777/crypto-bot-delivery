@@ -1,3 +1,5 @@
+Você tem razão! Vamos explicar o ROS de forma mais simples e passo a passo para que fique bem claro.
+
 ## O que é ROS?
 
 O ROS (Robot Operating System) é um **framework de código aberto** para desenvolvimento de software robótico[2][5]. Pense nele como uma "caixa de ferramentas" que facilita a criação de robôs inteligentes e autônomos.
