@@ -1,5 +1,7 @@
 # crypto-bot-delivery
 
+Perplexity: https://www.perplexity.ai/collections/crypto-bot-delivery-nYtHnZVqQG.rG7K.a8EZkw
+
 > # Robô Autônomo Descentralizado de Entrega via Google Maps
 
 ## **Visão Geral do Projeto**
