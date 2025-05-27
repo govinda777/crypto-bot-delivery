@@ -1,5 +1,7 @@
 
-Vou ajudá-lo a criar o diagrama de classes para o projeto crypto-bot-delivery. Com base na documentação do projeto, vou estruturar um diagrama de classes completo que representa a arquitetura do robô autônomo descentralizado de entrega.
+# Diagrama de classes crypto-bot-delivery. 
+
+Arquitetura do robô autônomo descentralizado de entrega.
 
 ## Diagrama de Classes - Crypto Bot Delivery
 
