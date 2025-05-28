@@ -1,0 +1,121 @@
+# **Como criar o Workspace Catkin corretamente**
+
+**Passo 1: Instalar ROS (se ainda não tiver)**
+```bash
+# Para Ubuntu 20.04 (ROS Noetic)
+sudo apt update
+sudo apt install ros-noetic-desktop-full
+```
+
+**Passo 2: Configurar o ambiente ROS**
+```bash
+# Adicionar ao .bashrc
+echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+```
+
+**Passo 3: Criar o workspace catkin**
+```bash
+# Criar o diretório do workspace
+mkdir -p ~/catkin_ws/src
+
+# Navegar para o workspace
+cd ~/catkin_ws
+
+# Inicializar o workspace
+catkin_make
+```
+
+**Passo 4: Configurar o workspace**
+```bash
+# Tornar o workspace visível para o ROS
+source ~/catkin_ws/devel/setup.bash
+
+# Adicionar ao .bashrc para carregar automaticamente
+echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+```
+
+**Passo 5: Verificar se funcionou**
+```bash
+# Verificar se o workspace está no caminho
+echo $ROS_PACKAGE_PATH
+```
+
+Deve mostrar: `/home/ubuntu/catkin_ws/src:/opt/ros/noetic/share`
+
+## **Estrutura final do workspace**
+
+Após a criação, você terá:
+```
+catkin_ws/
+├── build/        # Arquivos de compilação
+├── devel/        # Arquivos de desenvolvimento
+│   └── setup.bash
+└── src/          # Seus pacotes ROS (compartilhado via Samba)
+    └── CMakeLists.txt
+```
+
+## **Por que ter essa configuração no Samba**
+
+A seção `[catkin_ws_src]` no seu arquivo Samba permite:
+
+**Desenvolvimento colaborativo:** Múltiplos desenvolvedores podem acessar e editar os códigos ROS pela rede[2]
+
+**Acesso remoto:** Você pode trabalhar nos projetos ROS de qualquer máquina na rede sem precisar transferir arquivos
+
+**Backup automático:** Outros computadores podem fazer backup dos seus projetos roboticos automaticamente
+
+**Integração com IDEs:** IDEs como Visual Studio Code podem acessar o workspace diretamente pela rede
+
+
+## **Ajustar permissões para o Samba**
+
+Para que o compartilhamento Samba funcione corretamente:
+
+```bash
+# Dar permissões adequadas
+sudo chown -R ubuntu:ubuntu /home/ubuntu/catkin_ws
+sudo chmod -R 755 /home/ubuntu/catkin_ws
+```
+
+## **Verificar a configuração Samba**
+
+Sua configuração atual está correta:
+```
+[catkin_ws_src]
+comment = Samba on Ubuntu
+path = /home/ubuntu/catkin_ws/src/
+read only = no
+browsable = yes
+```
+
+Após criar o workspace, reinicie o Samba:
+```bash
+sudo systemctl restart smbd
+sudo systemctl restart nmbd
+```
+
+Agora você pode acessar o diretório `/home/ubuntu/catkin_ws/src/` pela rede através do compartilhamento `catkin_ws_src`, facilitando o desenvolvimento de projetos ROS colaborativos[3][4][5].
+
+Citations:
+[1] https://pplx-res.cloudinary.com/image/private/user_uploads/61929226/d3b22b23-fec7-46ed-a9a2-631076e4856b/image.jpg
+[2] https://www.guiafoca.org/guiaonline/avancado/ch18s11.html
+[3] http://wiki.ros.org/catkin/Tutorials/create_a_workspace
+[4] https://levi-armstrong.github.io/doc/kinetic/session1/Create-Catkin-Workspace.html
+[5] https://industrial-training-master.readthedocs.io/en/melodic/_source/session1/Create-Catkin-Workspace.html
+[6] https://www.theconstruct.ai/ros-5-minutes-001-create-ros-catkin-workspace/
+[7] https://people.eng.unimelb.edu.au/pbeuchat/asclinic/software/ros_create_catkin_ws_and_package.html
+[8] https://www.vivaolinux.com.br/dica/Configurando-compartilhamento-simples-no-Samba
+[9] https://www.qconcursos.com/questoes-de-concursos/questoes/8069a0ae-2d
+[10] https://www.youtube.com/watch?v=Osvr5-Y3174
+[11] https://www.youtube.com/watch?v=TBwQH6Tezo8
+[12] https://www.youtube.com/watch?v=hlog66DnWBw
+[13] https://omecatronico.com.br/blog/instalacao-ros-melodic-morenia/
+[14] https://repositorio.ifro.edu.br/bitstreams/9cfc307c-99d3-417c-b1d4-ea9fe55317cc/download
+[15] https://wiki.inf.ufpr.br/maziero/doku.php?id=espec%3Aservico_samba
+[16] https://askubuntu.com/questions/1512747/samba-shares-ubuntu-22
+[17] https://ubuntuforums.org/showthread.php?t=1962617
+[18] https://forums.raspberrypi.com/viewtopic.php?t=205379
+[19] http://wiki.ros.org/pt_BR/ROS/Tutorials/catkin/BuildingPackages
+[20] https://www.youtube.com/watch?v=ntJuN-uanjE
+[21] http://wiki.ros.org/pt_BR/ROS/Tutorials/BuildingPackages
