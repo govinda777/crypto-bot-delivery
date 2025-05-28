@@ -2,11 +2,6 @@
 
 Perplexity: https://www.perplexity.ai/collections/crypto-bot-delivery-nYtHnZVqQG.rG7K.a8EZkw
 
-## Pré-requisitos
-
-* sudo apt install samba
-* Escola de robotica: https://app.theconstruct.ai/login/
-
 > # Robô Autônomo Descentralizado de Entrega via Google Maps
 
 ## **Visão Geral do Projeto**
