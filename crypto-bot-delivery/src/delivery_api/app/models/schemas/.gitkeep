@@ -1,0 +1,2 @@
+# This file ensures the 'schemas' directory is tracked by git.
+# Pydantic schemas (data validation models) will go here.

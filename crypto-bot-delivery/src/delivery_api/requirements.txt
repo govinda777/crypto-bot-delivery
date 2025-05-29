@@ -1,0 +1,5 @@
+fastapi
+uvicorn[standard] # For running the server
+pydantic
+python-jose[cryptography]
+passlib[bcrypt]
