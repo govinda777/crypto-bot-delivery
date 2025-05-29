@@ -448,6 +448,61 @@ def generate_launch_description():
 
 ---
 
+## Continuous Integration (CI)
+
+This project uses GitHub Actions for Continuous Integration. The CI pipeline is defined in `.github/workflows/ci.yml` and automatically runs on every push to the `main` branch or when a pull request targets `main`.
+
+The pipeline currently performs the following checks for the Python components located in the `crypto-bot-delivery` directory:
+
+1.  **Linting:**
+    *   Checks Python code formatting with [Black](https://github.com/psf/black).
+    *   Checks for style issues and errors with [Flake8](https://flake8.pycqa.org/en/latest/).
+2.  **Unit Testing:**
+    *   Runs Python unit tests using [pytest](https://pytest.org).
+
+Placeholders for future enhancements include:
+*   Building and testing ROS2 nodes.
+*   Performing security scans (SAST, dependency checking, smart contract analysis).
+
+### Running Checks Locally
+
+To ensure your code passes CI checks before pushing, you can run the linters and tests locally.
+
+**1. Install tools (if not already installed):**
+   ```bash
+   python -m pip install --upgrade pip
+   pip install black flake8 pytest
+   ```
+
+**2. Navigate to the Python package directory:**
+   ```bash
+   cd crypto-bot-delivery
+   ```
+
+**3. Run Black (to check formatting):**
+   ```bash
+   black --check .
+   ```
+   To automatically format the code, run:
+   ```bash
+   black .
+   ```
+
+**4. Run Flake8:**
+   ```bash
+   flake8 .
+   ```
+
+**5. Run pytest:**
+   (Assuming your `pyproject.toml` and test structure like `src/delivery_crypto/tests` are set up)
+   ```bash
+   pytest src/delivery_crypto/tests 
+   ```
+   Or simply `pytest` if all tests are discoverable from the `crypto-bot-delivery` directory and configured in `pyproject.toml`.
+
+Configuration for Black can be found in `crypto-bot-delivery/pyproject.toml` (`[tool.black]` section).
+Configuration for Flake8 can be found in `crypto-bot-delivery/.flake8`.
+
 ## **Compilação e Execução**
 
 ### **1. Compilar Workspace**

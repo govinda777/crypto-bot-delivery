@@ -38,3 +38,7 @@ markers = [
     "slow: marks tests as slow to run",
     "integration: marks integration tests",
 ]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py310']
