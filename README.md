@@ -1,5 +1,7 @@
 # crypto-bot-delivery
 
+![](./image.png)
+
 Perplexity: https://www.perplexity.ai/collections/crypto-bot-delivery-nYtHnZVqQG.rG7K.a8EZkw
 Video: https://youtu.be/iLiI_IRedhI?si=wKqS-CcKLoUeneRk
 
